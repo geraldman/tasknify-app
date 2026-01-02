@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'widget/custom-button.dart';
+import 'styles/styles.dart';
+import 'get-started.dart';
 
 class StartApp extends StatelessWidget {
   const StartApp({super.key});
@@ -10,10 +12,10 @@ class StartApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Tasknify Start App',
+      title: 'Tasknify',
       home: Scaffold(
         backgroundColor: Color(0xffFCFBFC),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        // floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -24,30 +26,10 @@ class StartApp extends StatelessWidget {
                 height: 228,
                 alignment: Alignment.bottomCenter,
               ),
-              Text(
-                "Tasknify",
-                style: GoogleFonts.gabarito(
-                  textStyle: TextStyle(
-                    color: const Color(0xff004AAD),
-                    fontSize: 50,
-                    height: 1.0,
-                    fontWeight: FontWeight.bold,
-                  )
-                ),
-              ),
+              PrimaryGabarito(text: "Tasknify", color: Color(0xff004AAD),textAlign: TextAlign.center),
               Padding(
                 padding: const EdgeInsets.only(top: 15),
-                child: Text(
-                  "Upgrade your notes-taking \nexperience.",
-                  style: GoogleFonts.gabarito(
-                    textStyle: TextStyle(
-                      color: Colors.black,
-                      fontSize: 20,
-                      height: 1.2,
-                    )
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                child: RegularGabarito(text: "Upgrade your notes-taking \nexperience", color:Colors.black ,textAlign: TextAlign.center),
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 50), // raise the button
@@ -57,7 +39,7 @@ class StartApp extends StatelessWidget {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => RegisterFrame()),
+                        MaterialPageRoute(builder: (_) => RegisterLoginBaseFrame()),
                       );
                     },
                     width: 200,
@@ -70,18 +52,6 @@ class StartApp extends StatelessWidget {
           ),
         ),
       )
-    );
-  }
-}
-
-class RegisterFrame extends StatelessWidget{
-  const RegisterFrame({super.key});
-
-  @override
-  Widget build(BuildContext context){
-    // TODO: implement build
-    return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.blue, title: Text("About us"),),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:tasknify/styles/styles.dart';
 
 class CustomButton extends StatelessWidget{
   final String text;
@@ -71,4 +72,87 @@ class PrimaryButton extends CustomButton{
     textColor: const Color(0xffF5F5F5),
     fontSize: 20,
   );
+}
+
+class RegisterLoginButton extends StatelessWidget{
+
+  final VoidCallback onPressed;
+  final String FrameState; // this is will determine if its changing to login or register
+
+  const RegisterLoginButton({
+    super.key,
+    required this.FrameState,
+    required this.onPressed
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xffEFEFEF),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Stack(
+        children: [
+          /// 🔥 Sliding indicator
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.fastOutSlowIn,
+            alignment: FrameState == "login"
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.42,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              )
+            ),
+          ),
+
+          /// Buttons layer
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: FrameState == "register"
+                      ? null // already active
+                      : onPressed,
+                  style: TextButton.styleFrom().copyWith(
+                    overlayColor: WidgetStateProperty.all(Colors.transparent)
+                  ),
+                  child: RegularButtonGabarito(
+                    text: "Register",
+                    color: FrameState == "register"
+                        ? Colors.black
+                        : Colors.black26,
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              ),
+              Expanded(
+                child: TextButton(
+                  onPressed: FrameState == "login"
+                      ? null // already active
+                      : onPressed,
+                  style: TextButton.styleFrom().copyWith(
+                    overlayColor: WidgetStateProperty.all(Colors.transparent)
+                  ),
+                  child: RegularButtonGabarito(
+                    text: "Log in",
+                    color: FrameState == "login"
+                        ? Colors.black
+                        : Colors.black26,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
 }
