@@ -97,6 +97,20 @@ class RegularButtonGabarito extends CustomText{
   );
 }
 
+class MediumGabarito extends CustomText{
+  const MediumGabarito({
+    super.key,
+    required super.text,
+    required super.color,
+    required super.textAlign,
+  }) : super(
+    font: 'gabarito',
+    fontSize: 16,
+    fontWeight: FontWeight.normal,
+    fontHeight: 1,
+  );
+}
+
 class SmallGabarito extends CustomText{
   const SmallGabarito({
     super.key,

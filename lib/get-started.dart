@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:tasknify/widget/form-widget.dart';
 import 'widget/custom-button.dart';
 import 'styles/styles.dart';
 
@@ -10,6 +10,7 @@ class RegisterLoginBaseFrame extends StatelessWidget{
   Widget build(BuildContext context){
     return Scaffold(
       backgroundColor: Color(0xff004AAD),
+      resizeToAvoidBottomInset: true,
     body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -66,22 +67,47 @@ class AuthPage extends StatefulWidget{
 }
 
 class _AuthPageState extends State<AuthPage>{
-  bool isLogin = true;
+  bool isLogin = false;
+  int registerStep = 1;
 
   void toggleForm(){
     setState(() {
       isLogin = !isLogin;
+      registerStep = 1;
+    });
+  }
+
+  void goToNextRegisterStep(){
+    setState((){
+      registerStep++;
+    });
+  }
+
+  void goBackRegisterStep(){
+    setState((){
+      if(registerStep > 1){
+        registerStep--;
+      }
+      else{
+        isLogin = false;
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool showGoBack = !isLogin && registerStep > 1;
+
     return Column(
       children: [
-        RegisterLoginButton(
+        if(showGoBack)
+          PrimaryInvertedButton(text: "Go Back", onPressed:goBackRegisterStep,)
+        else
+          RegisterLoginButton(
           FrameState: isLogin ? "login" : "register", 
           onPressed: toggleForm
         ),
+
         const SizedBox(height: 23.0,),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 400),
@@ -96,7 +122,7 @@ class _AuthPageState extends State<AuthPage>{
           },
           child: isLogin 
           ? const LoginForm(key: ValueKey("login"))
-          : const RegisterFormOne(key: ValueKey("register"))
+          : RegisterPageState(step: registerStep, key: ValueKey("register"), onNext: goToNextRegisterStep,)
         )
       ],
     );
@@ -104,28 +130,202 @@ class _AuthPageState extends State<AuthPage>{
 
 }
 
-class RegisterFormOne extends StatelessWidget{
-  const RegisterFormOne({super.key});
-  
+class RegisterPageState extends StatelessWidget {
+  final int step;
+  final VoidCallback onNext;
+
+  const RegisterPageState({
+    super.key,
+    required this.step,
+    required this.onNext,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: const [
-        Text("Register Form")
-       ],
+    return step == 1
+        ? RegisterFormOne(onNext: onNext)
+        : const RegisterFormTwo();
+  }
+}
+
+class RegisterFormOne extends StatefulWidget{
+  final VoidCallback? onNext;
+
+  const RegisterFormOne({
+    super.key,
+    required this.onNext
+  });
+
+  @override
+  State<RegisterFormOne> createState() => _RegisterFormOneState();
+}
+
+class _RegisterFormOneState extends State<RegisterFormOne> {
+  final _registerKeyOne = GlobalKey<FormState>();
+  final TextEditingController _usernameController = TextEditingController();
+  bool isFormValid = false;
+
+  @override
+  void initState(){
+    super.initState();
+    _usernameController.addListener(_validateForm);
+  } 
+
+  void _validateForm(){
+    final valid = _registerKeyOne.currentState?.validate() ?? false;
+    if(valid != isFormValid){
+      setState((){
+        isFormValid = valid;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _registerKeyOne,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: Column(
+        children: [
+          UsernameFormWidget(controller: _usernameController,),
+          SizedBox(height: 38,),
+          SizedBox(
+            width: double.infinity,
+            child: PrimaryInvertedButton(
+              text: "Next", 
+              onPressed: isFormValid ? widget.onNext : null,
+            ),
+          )
+         ],
+      ),
     );
   }
 }
 
-class LoginForm extends StatelessWidget{
-  const LoginForm({super.key});
-  
+class RegisterFormTwo extends StatefulWidget{
+  final VoidCallback? onNext;
+  const RegisterFormTwo({super.key, this.onNext});
+
+  @override
+  State<RegisterFormTwo> createState() => _RegisterFormTwoState();
+}
+
+class _RegisterFormTwoState extends State<RegisterFormTwo> {
+  final _registerKeyTwo = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool isFormValid = false;
+
+  @override
+  void initState(){
+    super.initState();
+    _emailController.addListener(_validateForm);
+    _passwordController.addListener(_validateForm);
+  }
+
+  void _validateForm(){
+    final valid = _registerKeyTwo.currentState?.validate() ?? false;
+    if(valid != isFormValid){
+      setState((){
+        isFormValid = valid;
+      });
+    }
+  }
+
+  @override
+  void dispose(){
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: const [
-        Text("Login Form")
-       ],
+    return Form(
+      key: _registerKeyTwo,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: Column(
+        children: [
+          EmailFormWidget(controller: _emailController),
+          SizedBox(height: 18,),
+          PasswordFormWidget(controller: _passwordController),
+          SizedBox(height: 38,),
+          SizedBox(
+            width: double.infinity,
+            child: PrimaryInvertedButton(
+              text: "Next",
+              onPressed: isFormValid ? widget.onNext : null,
+            ),
+          )
+         ],
+      ),
+    );
+  }
+}
+
+class LoginForm extends StatefulWidget{
+  final VoidCallback? onLogin;
+  const LoginForm({super.key, this.onLogin});
+
+  @override
+  State<LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<LoginForm>{
+  final _loginKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool isFormValid = false;
+
+  @override
+  void initState(){
+    super.initState();
+    _emailController.addListener(_validateForm);
+    _passwordController.addListener(_validateForm);
+  }
+
+  void _validateForm(){
+    final valid = _loginKey.currentState?.validate() ?? false;
+    if(valid != isFormValid){
+      setState((){
+        isFormValid = valid;
+      });
+    }
+  }
+
+  @override
+  void dispose(){
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _loginKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: Column(
+        children: [
+          EmailFormWidget(controller: _emailController),
+          SizedBox(height: 18,),
+          PasswordFormWidget(controller: _passwordController),
+          SizedBox(height: 38,),
+          SizedBox(
+            width: double.infinity,
+            child: PrimaryInvertedButton(
+              text: "Log in",
+              onPressed: isFormValid ? widget.onLogin : null,
+            ),
+          ),
+         ],
+      ),
     );
   }
 }

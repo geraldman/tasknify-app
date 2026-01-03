@@ -6,12 +6,14 @@ class CustomButton extends StatelessWidget{
   final String text;
   final Color textColor;
   final double fontSize;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color color;
   final double borderRadius;
   final EdgeInsetsGeometry innerPadding;
   final double? width;
   final double? height;
+  final Color borderColor;
+  final double borderWidth;
 
   const CustomButton({
     super.key,
@@ -20,6 +22,8 @@ class CustomButton extends StatelessWidget{
     required this.onPressed,
     required this.color,
     required this.fontSize,
+    this.borderColor = Colors.transparent,
+    this.borderWidth = 1.0,
     this.borderRadius = 15.0,
     this.innerPadding = const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
     this.width,
@@ -35,8 +39,15 @@ class CustomButton extends StatelessWidget{
         backgroundColor: color,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius),
+          side: BorderSide(color: borderColor, width: borderWidth)
         ),
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent
+      ).copyWith(
+        overlayColor: WidgetStateProperty.all(Colors.transparent)
       ),
+      
       onPressed: onPressed,
       child: Text(
         text,
@@ -74,6 +85,23 @@ class PrimaryButton extends CustomButton{
   );
 }
 
+class PrimaryInvertedButton extends CustomButton{
+  const PrimaryInvertedButton({
+    super.key,
+    required super.text,
+    required super.onPressed,
+    super.borderRadius,
+    super.innerPadding,
+    super.width,
+    super.height,
+  }) : super(
+    color: Colors.transparent,
+    textColor: const Color(0xff004AAD),
+    fontSize: 20,
+    borderColor: const Color(0xff004AAD),
+  );
+}
+
 class RegisterLoginButton extends StatelessWidget{
 
   final VoidCallback onPressed;
@@ -87,6 +115,7 @@ class RegisterLoginButton extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
+
     return Container(
       height: 48,
       padding: const EdgeInsets.all(4),
@@ -111,7 +140,7 @@ class RegisterLoginButton extends StatelessWidget{
               )
             ),
           ),
-
+          
           /// Buttons layer
           Row(
             children: [
