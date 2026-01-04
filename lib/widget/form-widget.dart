@@ -37,6 +37,7 @@ class _formDecorationOutlineFixState extends State<formDecorationOutlineFix> {
     if(value.length < 8){
       return "Minimum 8 characters";
     }
+    return null;
   }
 
   String? emailValidator(String? value){
@@ -48,6 +49,7 @@ class _formDecorationOutlineFixState extends State<formDecorationOutlineFix> {
     if(!emailRegex.hasMatch(value)){
       return "Invalid email format";
     }
+    return null;
   }
 
   bool _obscurePassword = true;

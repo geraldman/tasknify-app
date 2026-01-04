@@ -3,56 +3,103 @@ import 'package:tasknify/widget/form-widget.dart';
 import 'widget/custom-button.dart';
 import 'styles/styles.dart';
 
-class RegisterLoginBaseFrame extends StatelessWidget{
+class RegisterLoginBaseFrame extends StatefulWidget{
   const RegisterLoginBaseFrame({super.key});
 
   @override
+State<RegisterLoginBaseFrame> createState() => _RegisterLoginBaseFrameState();
+}
+
+class _RegisterLoginBaseFrameState extends State<RegisterLoginBaseFrame> {
+  double _scrollOffset = 0;
+
+  @override
   Widget build(BuildContext context){
+    final double headerShadowOpacity = (_scrollOffset / 50).clamp(0.0, 0.3);
+    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+    
     return Scaffold(
       backgroundColor: Color(0xff004AAD),
       resizeToAvoidBottomInset: true,
-    body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
-          Padding(
-            padding: DefaultSideMargin(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 126.0,),
-                PrimaryGabarito(text: "Get Started", color: Colors.white, textAlign: TextAlign.left),
-                SizedBox(height: 10.0),
-                SmallGabarito(text: "Create your account or login to explore our app", color: Colors.white, textAlign: TextAlign.left),
-              ],
-            ),
-          ),
-          SizedBox(height: 40.0,),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(25),
-                  topRight: Radius.circular(25)
-                ),
-                color: Colors.white
-              ),
+          // Scrollable content
+          NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is ScrollUpdateNotification) {
+                setState(() {
+                  _scrollOffset = notification.metrics.pixels;
+                });
+              }
+              return false;
+            },
+            child: SingleChildScrollView(
+              physics: isKeyboardVisible 
+                ? const ClampingScrollPhysics() 
+                : const NeverScrollableScrollPhysics(),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
                     padding: DefaultSideMargin(),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(height: 34.0),
-                        AuthPage(),
+                        SizedBox(height: 126.0,),
+                        PrimaryGabarito(text: "Get Started", color: Colors.white, textAlign: TextAlign.left),
+                        SizedBox(height: 10.0),
+                        SmallGabarito(text: "Create your account or login to explore our app", color: Colors.white, textAlign: TextAlign.left),
                       ],
+                    ),
+                  ),
+                  SizedBox(height: 40.0,),
+                  Container(
+                    constraints: BoxConstraints(
+                      minHeight: MediaQuery.of(context).size.height - 220,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(25),
+                        topRight: Radius.circular(25)
+                      ),
+                      color: Colors.white,
+                    ),
+                    child: Padding(
+                      padding: DefaultSideMargin(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: 34.0),
+                          AuthPage(),
+                          SizedBox(height: 40.0),
+                        ],
+                      ),
                     ),
                   )
                 ],
               ),
             ),
-          )
+          ),
+          // Shadow overlay at the top when scrolled
+          if (headerShadowOpacity > 0)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 80,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(headerShadowOpacity),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -123,17 +170,26 @@ class _AuthPageState extends State<AuthPage>{
         const SizedBox(height: 23.0,),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 400),
+          layoutBuilder: (currentChild, previousChildren) {
+            return Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                ...previousChildren,
+                if (currentChild != null) currentChild,
+              ],
+            );
+          },
           transitionBuilder: (child, animation){
             return SlideTransition(
               position: Tween<Offset>(
-                begin: const Offset(0.1, 0),
+                begin: const Offset(0, 0),
                 end: Offset.zero, 
               ).animate(animation),
               child: FadeTransition(opacity: animation, child:child), 
             );
           },
           child: isLogin 
-          ? const LoginForm(key: ValueKey("login"))
+          ? LoginForm(key: ValueKey("login"), onLogin: () {},)
           : RegisterPageState(step: registerStep, key: ValueKey("register"), onNext: goToNextRegisterStep,)
         )
       ],
@@ -155,7 +211,7 @@ class RegisterPageState extends StatelessWidget {
   Widget build(BuildContext context) {
     return step == 1
         ? RegisterFormOne(onNext: onNext)
-        : const RegisterFormTwo();
+        : RegisterFormTwo(onRegister: () {},);
   }
 }
 
@@ -183,12 +239,15 @@ class _RegisterFormOneState extends State<RegisterFormOne> {
   } 
 
   void _validateForm(){
-    final valid = _registerKeyOne.currentState?.validate() ?? false;
-    if(valid != isFormValid){
-      setState((){
-        isFormValid = valid;
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final valid = _registerKeyOne.currentState?.validate() ?? false;
+      if(valid != isFormValid){
+        setState((){
+          isFormValid = valid;
+        });
+      }
+    });
   }
 
   @override
@@ -203,6 +262,7 @@ class _RegisterFormOneState extends State<RegisterFormOne> {
       key: _registerKeyOne,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           UsernameFormWidget(controller: _usernameController,),
           SizedBox(height: 38,),
@@ -220,8 +280,8 @@ class _RegisterFormOneState extends State<RegisterFormOne> {
 }
 
 class RegisterFormTwo extends StatefulWidget{
-  final VoidCallback? onNext;
-  const RegisterFormTwo({super.key, this.onNext});
+  final VoidCallback? onRegister;
+  const RegisterFormTwo({super.key, this.onRegister});
 
   @override
   State<RegisterFormTwo> createState() => _RegisterFormTwoState();
@@ -241,12 +301,15 @@ class _RegisterFormTwoState extends State<RegisterFormTwo> {
   }
 
   void _validateForm(){
-    final valid = _registerKeyTwo.currentState?.validate() ?? false;
-    if(valid != isFormValid){
-      setState((){
-        isFormValid = valid;
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final valid = _registerKeyTwo.currentState?.validate() ?? false;
+      if(valid != isFormValid){
+        setState((){
+          isFormValid = valid;
+        });
+      }
+    });
   }
 
   @override
@@ -262,6 +325,7 @@ class _RegisterFormTwoState extends State<RegisterFormTwo> {
       key: _registerKeyTwo,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           EmailFormWidget(controller: _emailController),
           SizedBox(height: 18,),
@@ -269,9 +333,9 @@ class _RegisterFormTwoState extends State<RegisterFormTwo> {
           SizedBox(height: 38,),
           SizedBox(
             width: double.infinity,
-            child: PrimaryInvertedButton(
-              text: "Next",
-              onPressed: isFormValid ? widget.onNext : null,
+            child: PrimaryButton(
+              text: "Register",
+              onPressed: isFormValid ? widget.onRegister : null,
             ),
           )
          ],
@@ -302,12 +366,15 @@ class _LoginFormState extends State<LoginForm>{
   }
 
   void _validateForm(){
-    final valid = _loginKey.currentState?.validate() ?? false;
-    if(valid != isFormValid){
-      setState((){
-        isFormValid = valid;
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final valid = _loginKey.currentState?.validate() ?? false;
+      if(valid != isFormValid){
+        setState((){
+          isFormValid = valid;
+        });
+      }
+    });
   }
 
   @override
@@ -323,6 +390,7 @@ class _LoginFormState extends State<LoginForm>{
       key: _loginKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           EmailFormWidget(controller: _emailController),
           SizedBox(height: 18,),
@@ -330,7 +398,7 @@ class _LoginFormState extends State<LoginForm>{
           SizedBox(height: 38,),
           SizedBox(
             width: double.infinity,
-            child: PrimaryInvertedButton(
+            child: PrimaryButton(
               text: "Log in",
               onPressed: isFormValid ? widget.onLogin : null,
             ),

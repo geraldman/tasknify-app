@@ -14,6 +14,8 @@ class CustomButton extends StatelessWidget{
   final double? height;
   final Color borderColor;
   final double borderWidth;
+  final Color disabledBackgroundColor;
+  final Color disabledBorderColor;
 
   const CustomButton({
     super.key,
@@ -22,6 +24,8 @@ class CustomButton extends StatelessWidget{
     required this.onPressed,
     required this.color,
     required this.fontSize,
+    required this.disabledBackgroundColor,
+    required this.disabledBorderColor,
     this.borderColor = Colors.transparent,
     this.borderWidth = 1.0,
     this.borderRadius = 15.0,
@@ -34,25 +38,42 @@ class CustomButton extends StatelessWidget{
   Widget build(BuildContext context) {
     // TODO: implement build
     final button = ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        padding: innerPadding,
-        backgroundColor: color,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-          side: BorderSide(color: borderColor, width: borderWidth)
+      style: ButtonStyle(
+        padding: WidgetStateProperty.all(innerPadding),
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return disabledBackgroundColor;
+          }
+          return color;
+        }),
+        foregroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return disabledBorderColor;
+          }
+          return textColor;
+        }),
+        shape: WidgetStateProperty.all(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
         ),
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        shadowColor: Colors.transparent
-      ).copyWith(
-        overlayColor: WidgetStateProperty.all(Colors.transparent)
+        side: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return BorderSide(color: disabledBorderColor, width: borderWidth);
+          }
+          return BorderSide(color: borderColor, width: borderWidth);
+        }),
+        elevation: WidgetStateProperty.all(0),
+        surfaceTintColor: WidgetStateProperty.all(Colors.transparent),
+        shadowColor: WidgetStateProperty.all(Colors.transparent),
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
       ),
       
       onPressed: onPressed,
       child: Text(
         text,
         style: GoogleFonts.gabarito(
-          textStyle: TextStyle(color: textColor, fontSize: fontSize),
+          textStyle: TextStyle(color: onPressed == null ? disabledBorderColor : textColor, fontSize: fontSize),
         ),
       ),
     );
@@ -82,6 +103,8 @@ class PrimaryButton extends CustomButton{
     color: const Color(0xff004AAD),
     textColor: const Color(0xffF5F5F5),
     fontSize: 20,
+    disabledBackgroundColor: const Color(0xffE0E0E0),
+    disabledBorderColor: const Color(0xff9E9E9E),
   );
 }
 
@@ -99,6 +122,8 @@ class PrimaryInvertedButton extends CustomButton{
     textColor: const Color(0xff004AAD),
     fontSize: 20,
     borderColor: const Color(0xff004AAD),
+    disabledBackgroundColor: Colors.transparent,
+    disabledBorderColor: const Color(0xffB0B0B0),
   );
 }
 
