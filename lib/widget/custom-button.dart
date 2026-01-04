@@ -102,15 +102,22 @@ class PrimaryInvertedButton extends CustomButton{
   );
 }
 
-class RegisterLoginButton extends StatelessWidget{
+enum AuthButtonMode{
+  toggle, back,
+}
 
+class RegisterLoginButton extends StatelessWidget {
   final VoidCallback onPressed;
-  final String FrameState; // this is will determine if its changing to login or register
+  final String frameState;
+  final AuthButtonMode mode;
+  final bool isExpanding;
 
   const RegisterLoginButton({
     super.key,
-    required this.FrameState,
-    required this.onPressed
+    required this.frameState,
+    required this.onPressed,
+    this.mode = AuthButtonMode.toggle,
+    this.isExpanding = false
   });
 
   @override
@@ -123,65 +130,149 @@ class RegisterLoginButton extends StatelessWidget{
         color: const Color(0xffEFEFEF),
         borderRadius: BorderRadius.circular(15),
       ),
-      child: Stack(
-        children: [
-          /// 🔥 Sliding indicator
-          AnimatedAlign(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.fastOutSlowIn,
-            alignment: FrameState == "login"
-                ? Alignment.centerRight
-                : Alignment.centerLeft,
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.42,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              )
-            ),
-          ),
-          
-          /// Buttons layer
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: FrameState == "register"
-                      ? null // already active
-                      : onPressed,
-                  style: TextButton.styleFrom().copyWith(
-                    overlayColor: WidgetStateProperty.all(Colors.transparent)
+      child: LayoutBuilder(
+        builder:(context, constraints) {
+          final double fullWidth = constraints.maxWidth;
+          final double halfWidth = fullWidth / 2;
+
+        return Stack(
+          children: [
+            /// 🔥 ANIMATED INDICATOR (THIS IS THE MAGIC)
+            AnimatedAlign(
+              key: const ValueKey("auth-pill"),
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.fastOutSlowIn,
+              alignment: mode == AuthButtonMode.back
+                  ? Alignment.center
+                  : frameState == "login"
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+
+              /// 🔒 FIX: alignment gets a STABLE size
+              child: SizedBox(
+                width: mode == AuthButtonMode.back
+                  ? fullWidth
+                  : halfWidth, // ← constant reference for sliding
+
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 700),
+                  curve: Curves.fastEaseInToSlowEaseOut,
+
+                  /// expansion happens INSIDE
+                  width: mode == AuthButtonMode.back && isExpanding
+                      ? fullWidth
+                      : halfWidth,
+
+                  height: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: RegularButtonGabarito(
-                    text: "Register",
-                    color: FrameState == "register"
-                        ? Colors.black
-                        : Colors.black26,
-                    textAlign: TextAlign.center,
-                  ),
-                )
-              ),
-              Expanded(
-                child: TextButton(
-                  onPressed: FrameState == "login"
-                      ? null // already active
-                      : onPressed,
-                  style: TextButton.styleFrom().copyWith(
-                    overlayColor: WidgetStateProperty.all(Colors.transparent)
-                  ),
-                  child: RegularButtonGabarito(
-                    text: "Log in",
-                    color: FrameState == "login"
-                        ? Colors.black
-                        : Colors.black26,
-                    textAlign: TextAlign.center,
+
+                  /// 🔄 GO BACK CONTENT (unchanged)
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 700),
+                    switchInCurve: Curves.easeInOutExpo,
+                    switchOutCurve: Curves.easeInOutExpo,
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: mode == AuthButtonMode.back
+                        ? Center(
+                            key: const ValueKey("back"),
+                            child: RegularButtonGabarito(
+                              text: "Go Back",
+                              color: Colors.black,
+                              textAlign: TextAlign.center,
+                            ),
+                          )
+                        : const SizedBox.shrink(
+                            key: ValueKey("empty"),
+                          ),
                   ),
                 ),
               ),
-            ],
-          )
-        ],
+            ),
+
+        
+            /// BUTTON LAYER (ONLY WHEN TOGGLE)
+            if (mode == AuthButtonMode.toggle)
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: frameState == "register"
+                          ? null
+                          : onPressed,
+                      style: frameState == "register" ? _buttonStyle(1) : _buttonStyle(0),
+                      child: RegularButtonGabarito(
+                        text: "Register",
+                        color: frameState == "register"
+                            ? Colors.black
+                            : Colors.black26,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: frameState == "login"
+                          ? null
+                          : onPressed,
+                      style: frameState == "login" ? _buttonStyle(1) : _buttonStyle(0),
+                      child: RegularButtonGabarito(
+                        text: "Log in",
+                        color: frameState == "login"
+                            ? Colors.black
+                            : Colors.black26,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+        
+            /// TAP AREA FOR GO BACK
+            if (mode == AuthButtonMode.back)
+              Positioned.fill(
+                child: TextButton(
+                  onPressed: onPressed,
+                  style: _buttonStyle(0),
+                  child: const SizedBox.shrink(),
+                ),
+              ),
+            ]
+          );
+        },
       ),
     );
+  }
+
+  ButtonStyle _buttonStyle(int active) {
+    if(active == 1){
+      return TextButton.styleFrom(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadiusGeometry.circular(12),
+        )
+      ).copyWith(
+        overlayColor:
+            WidgetStateProperty.all(Colors.transparent),
+      );
+    }
+    else{
+      return TextButton.styleFrom().copyWith(
+        overlayColor: WidgetStateProperty.all(Colors.transparent)
+      );
+    }
   }
 }

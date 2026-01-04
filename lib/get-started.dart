@@ -69,6 +69,7 @@ class AuthPage extends StatefulWidget{
 class _AuthPageState extends State<AuthPage>{
   bool isLogin = false;
   int registerStep = 1;
+  bool isExpanding = false;
 
   void toggleForm(){
     setState(() {
@@ -80,6 +81,13 @@ class _AuthPageState extends State<AuthPage>{
   void goToNextRegisterStep(){
     setState((){
       registerStep++;
+    });
+  
+    Future.delayed(const Duration(milliseconds: 400), () {
+    if (!mounted) return;
+      setState(() {
+        isExpanding = true;
+      });
     });
   }
 
@@ -100,12 +108,16 @@ class _AuthPageState extends State<AuthPage>{
 
     return Column(
       children: [
-        if(showGoBack)
-          PrimaryInvertedButton(text: "Go Back", onPressed:goBackRegisterStep,)
-        else
-          RegisterLoginButton(
-          FrameState: isLogin ? "login" : "register", 
-          onPressed: toggleForm
+        RegisterLoginButton(
+          key: const ValueKey("auth-header"),
+          isExpanding: isExpanding,
+          mode: showGoBack
+            ? AuthButtonMode.back
+            : AuthButtonMode.toggle,
+          frameState: isLogin ? "login" : "register", 
+          onPressed: showGoBack
+            ? goBackRegisterStep
+            : toggleForm
         ),
 
         const SizedBox(height: 23.0,),
@@ -127,7 +139,6 @@ class _AuthPageState extends State<AuthPage>{
       ],
     );
   }
-
 }
 
 class RegisterPageState extends StatelessWidget {
